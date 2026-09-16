@@ -65,10 +65,11 @@ async function readUploadedFileText(file: File): Promise<UploadedMaterial> {
       const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
       // pdfjs refuses to run at all without this — getDocument() throws immediately,
       // which silently degraded every PDF upload to just its filename (no text, no pages).
-      pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-        'pdfjs-dist/legacy/build/pdf.worker.min.mjs',
-        import.meta.url
-      ).toString();
+      // Served as a plain static file (public/pdf.worker.min.mjs) rather than bundled via
+      // `new URL(..., import.meta.url)` — Next's production build runs Terser on anything
+      // webpack bundles this way, and Terser can't parse the worker's ESM import/export
+      // syntax, which broke the Vercel build entirely.
+      pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
       const arrayBuffer = await file.arrayBuffer();
       const pdf = await pdfjs.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
 
