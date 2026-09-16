@@ -19,6 +19,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { OriginalPptxViewer } from './OriginalPptxViewer';
+import { PageImageViewer } from './PageImageViewer';
 import type { Language } from '@/types';
 
 // Builds a compact page list with ellipses (e.g. "1 … 6 7 [8] 9 10 … 15") so the slide
@@ -64,6 +65,7 @@ interface SlideViewerProps {
   materialText?: string;
   slideImages?: string[][];
   fileData?: string;
+  pageImages?: string[];
   originalSlidesCount?: number;
   currentSlide: number;
   onSlideChange: (slideNumber: number) => void;
@@ -77,6 +79,7 @@ export function SlideViewer({
   materialText = '',
   slideImages = [],
   fileData = '',
+  pageImages = [],
   originalSlidesCount,
   currentSlide,
   onSlideChange,
@@ -240,7 +243,9 @@ export function SlideViewer({
   const slides = uploadedSlides.length > 0 ? uploadedSlides : mockSlides;
   const visibleSlidesCount = fileData
     ? (originalSlidesCount ?? slidesCount)
-    : (uploadedSlides.length > 0 ? uploadedSlides.length : slidesCount);
+    : pageImages.length > 0
+      ? pageImages.length
+      : (uploadedSlides.length > 0 ? uploadedSlides.length : slidesCount);
   const currentSlideData = slides[currentSlide - 1] || slides[0];
   const activeNote = customNotes[currentSlide] || currentSlideData?.notes || (isIndo
     ? 'Sampaikan poin utama slide ini dengan artikulasi jelas dan tatap kamera.'
@@ -391,6 +396,8 @@ export function SlideViewer({
       <div className="relative flex-1 min-h-0 flex flex-col justify-center items-center bg-gradient-to-br from-zinc-900 via-zinc-950 to-black overflow-hidden">
         {fileData ? (
           <OriginalPptxViewer fileData={fileData} currentSlide={currentSlide} isFullscreen={isFullscreen} zoom={zoom} />
+        ) : pageImages.length > 0 ? (
+          <PageImageViewer images={pageImages} currentSlide={currentSlide} isFullscreen={isFullscreen} zoom={zoom} />
         ) : (
         <div
           className="w-full max-w-2xl bg-gradient-to-b from-zinc-900/90 to-zinc-950/90 p-8 rounded-2xl border border-zinc-800/70 shadow-2xl transition-transform duration-150 origin-center overflow-y-auto"

@@ -46,6 +46,7 @@ type UploadedMaterial = {
   slideImages?: string[][];
   fileData?: string;
   slideCount?: number;
+  pageImages?: string[];
 };
 
 function arrayBufferToBase64(buffer: ArrayBuffer): string {
@@ -62,22 +63,51 @@ async function readUploadedFileText(file: File): Promise<UploadedMaterial> {
   if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
     try {
       const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
+      // pdfjs refuses to run at all without this — getDocument() throws immediately,
+      // which silently degraded every PDF upload to just its filename (no text, no pages).
+      pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+        'pdfjs-dist/legacy/build/pdf.worker.min.mjs',
+        import.meta.url
+      ).toString();
       const arrayBuffer = await file.arrayBuffer();
       const pdf = await pdfjs.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
 
-      let extractedText = '';
+      const pageTexts: string[] = [];
+      const pageImages: string[] = [];
       for (let pageNum = 1; pageNum <= pdf.numPages; pageNum += 1) {
         const page = await pdf.getPage(pageNum);
         const textContent = await page.getTextContent();
         const pageText = textContent.items
           .map((item: any) => ('str' in item ? item.str : ''))
           .join(' ');
-        extractedText += `${pageText}\n`;
+        pageTexts.push(pageText);
+
+        // Render the actual page to an image so the Room can show the real page —
+        // matching the PPTX viewer instead of falling back to reflowed bullet text.
+        try {
+          const viewport = page.getViewport({ scale: 1.5 });
+          const canvas = document.createElement('canvas');
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          const context = canvas.getContext('2d');
+          if (context) {
+            await page.render({ canvasContext: context, viewport }).promise;
+            pageImages.push(canvas.toDataURL('image/jpeg', 0.85));
+          }
+        } catch {
+          // If rendering a page fails, the viewer just falls back to text for that upload.
+        }
       }
 
+      // Blank line between pages (not a single \n) so any text-based fallback splits
+      // per page instead of collapsing the whole document into one block.
+      const extractedText = pageTexts.join('\n\n').trim();
+
       return {
-        fileContent: extractedText.trim() || file.name,
+        fileContent: extractedText || file.name,
         fileType: 'pdf',
+        pageImages: pageImages.length === pdf.numPages ? pageImages : undefined,
+        slideCount: pdf.numPages,
       };
     } catch {
       return {
@@ -177,13 +207,6 @@ async function readUploadedFileText(file: File): Promise<UploadedMaterial> {
     }
   }
 
-  if (file.name.match(/\.(txt|md|csv)$/i) || file.type.startsWith('text/')) {
-    return {
-      fileContent: await file.text(),
-      fileType: 'text',
-    };
-  }
-
   if (file.name.toLowerCase().endsWith('.ppt')) {
     throw new Error(
       'Format .ppt (versi lama) tidak didukung. Silakan buka file di PowerPoint atau Google Slides dan simpan sebagai .pptx atau .pdf.'
@@ -192,7 +215,7 @@ async function readUploadedFileText(file: File): Promise<UploadedMaterial> {
 
   const ext = file.name.includes('.') ? `.${file.name.split('.').pop()}` : '';
   throw new Error(
-    `Format file ${ext || ''} tidak didukung. Format yang didukung: PDF, PPTX, DOCX, TXT, MD, CSV.`
+    `Format file ${ext || ''} tidak didukung. Format yang didukung: PDF, PPTX, DOCX.`
   );
 }
 
@@ -311,6 +334,7 @@ export default function NewPresentationPage() {
           slideImages: material.slideImages,
           fileData: material.fileData,
           slideCount: material.slideCount,
+          pageImages: material.pageImages,
         });
       }
 

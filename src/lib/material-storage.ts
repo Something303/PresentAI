@@ -5,6 +5,9 @@ export interface StoredMaterial {
   slideImages?: string[][];
   fileData?: string;
   slideCount?: number;
+  // One full-page rendered image per page (currently populated for PDF uploads) — lets the
+  // Room's slide viewer show the real page instead of falling back to text extracted per page.
+  pageImages?: string[];
 }
 
 const DATABASE_NAME = 'presentai-materials';

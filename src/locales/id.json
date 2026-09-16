@@ -84,7 +84,7 @@
     "title": "Judul Presentasi",
     "description": "Deskripsi",
     "uploadFile": "Unggah File",
-    "uploadHint": "Format yang didukung: PDF, PPTX, DOCX, TXT, MD, CSV (maks. 50MB)",
+    "uploadHint": "Format yang didukung: PDF, PPTX, DOCX (maks. 50MB)",
     "duration": "Durasi Presentasi (menit)",
     "language": "Bahasa Presentasi",
     "examiner": "Tipe Penguji",

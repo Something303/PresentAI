@@ -84,7 +84,7 @@
     "title": "Presentation Title",
     "description": "Description",
     "uploadFile": "Upload File",
-    "uploadHint": "Supported formats: PDF, PPTX, DOCX, TXT, MD, CSV (max 50MB)",
+    "uploadHint": "Supported formats: PDF, PPTX, DOCX (max 50MB)",
     "duration": "Presentation Duration (minutes)",
     "language": "Presentation Language",
     "examiner": "Examiner Type",

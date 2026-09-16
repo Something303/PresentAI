@@ -99,9 +99,6 @@ export default function LoginPage() {
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label htmlFor="password" className="label mb-0">{t('auth.password')}</label>
-                <a href="#" className="text-xs text-brand-600 dark:text-brand-400 hover:underline">
-                  {t('auth.forgotPassword')}
-                </a>
               </div>
               <div className="relative">
                 <input

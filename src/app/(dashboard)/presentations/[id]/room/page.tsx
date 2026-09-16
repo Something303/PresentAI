@@ -58,6 +58,7 @@ export default function PresentationRoomPage() {
   const [materialText, setMaterialText] = useState('');
   const [slideImages, setSlideImages] = useState<string[][]>([]);
   const [fileData, setFileData] = useState('');
+  const [pageImages, setPageImages] = useState<string[]>([]);
   const [slideCount, setSlideCount] = useState(6);
   const [currentSlide, setCurrentSlide] = useState(1);
   const [isRecording, setIsRecording] = useState(false);
@@ -178,6 +179,7 @@ export default function PresentationRoomPage() {
         setMaterialText(material.fileContent ?? '');
         setSlideImages(material.slideImages ?? []);
         setFileData(material.fileData ?? '');
+        setPageImages(material.pageImages ?? []);
         setSlideCount(material.slideCount ?? 6);
 
         // Derive presentation info if not loaded or if still has mock default title
@@ -213,10 +215,12 @@ export default function PresentationRoomPage() {
               fileData?: string;
               slideCount?: number;
               fileName?: string;
+              pageImages?: string[];
             };
             setMaterialText(parsed.fileContent ?? '');
             setSlideImages(parsed.slideImages ?? []);
             setFileData(parsed.fileData ?? '');
+            setPageImages(parsed.pageImages ?? []);
             setSlideCount(parsed.slideCount ?? 6);
             if (parsed.fileName) {
               const clean = parsed.fileName.replace(/\.[^/.]+$/, '');
@@ -230,12 +234,14 @@ export default function PresentationRoomPage() {
         setMaterialText('');
         setSlideImages([]);
         setFileData('');
+        setPageImages([]);
         setSlideCount(6);
       }
     }).catch(() => {
       setMaterialText('');
       setSlideImages([]);
       setFileData('');
+      setPageImages([]);
       setSlideCount(6);
     });
   }, [presentationId]);
@@ -912,6 +918,7 @@ export default function PresentationRoomPage() {
               materialText={materialText}
               slideImages={slideImages}
               fileData={fileData}
+              pageImages={pageImages}
               originalSlidesCount={slideCount}
               currentSlide={currentSlide}
               onSlideChange={setCurrentSlide}

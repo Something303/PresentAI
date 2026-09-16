@@ -17,7 +17,7 @@ interface FileUploaderProps {
 export function FileUploader({
   onFileSelected,
   onFileRemoved,
-  accept = '.pdf,.pptx,.docx,.txt,.md,.csv',
+  accept = '.pdf,.pptx,.docx',
   maxSizeMB = 50,
   className,
 }: FileUploaderProps) {
@@ -56,15 +56,12 @@ export function FileUploader({
         'application/pdf',
         'application/vnd.openxmlformats-officedocument.presentationml.presentation',
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'text/plain',
-        'text/markdown',
-        'text/csv',
       ];
-      if (!validTypes.includes(file.type) && !file.name.match(/\.(pdf|pptx|docx|txt|md|csv)$/i)) {
+      if (!validTypes.includes(file.type) && !file.name.match(/\.(pdf|pptx|docx)$/i)) {
         const ext = file.name.includes('.') ? `.${file.name.split('.').pop()}` : '';
         const msg = language === 'en'
-          ? `Format ${ext || 'file'} is not supported. Supported formats: PDF, PPTX, DOCX, TXT, MD, CSV.`
-          : `Format ${ext || 'file'} tidak didukung. Format yang didukung: PDF, PPTX, DOCX, TXT, MD, CSV.`;
+          ? `Format ${ext || 'file'} is not supported. Supported formats: PDF, PPTX, DOCX.`
+          : `Format ${ext || 'file'} tidak didukung. Format yang didukung: PDF, PPTX, DOCX.`;
         setError(msg);
         toast.error(msg);
         if (inputRef.current) inputRef.current.value = '';
