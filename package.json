@@ -33,6 +33,7 @@
     "next": "14.2.18",
     "openai": "^4.73.0",
     "pdfjs-dist": "^4.9.124",
+    "pitchfinder": "^2.3.4",
     "pptx-preview": "^1.0.7",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

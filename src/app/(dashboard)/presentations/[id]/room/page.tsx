@@ -21,6 +21,7 @@ import { useCamera } from '@/hooks/useCamera';
 import { useMicrophone } from '@/hooks/useMicrophone';
 import { useSpeechToText } from '@/hooks/useSpeechToText';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
+import { analyzeIntonation } from '@/lib/audio-intonation';
 import type { TranscribeAudioResponse } from '@/app/api/transcribe-audio/route';
 import { CameraPreview } from '@/components/presentation/CameraPreview';
 import { SlideViewer } from '@/components/presentation/SlideViewer';
@@ -123,6 +124,9 @@ export default function PresentationRoomPage() {
   // Verbatim transcript from Whisper (set once Q&A begins). Falls back to the browser's
   // live-caption transcript (stt.transcript) when unavailable (no API key, or transcription failed).
   const verbatimTranscriptRef = useRef<string>('');
+  // The same raw recording sent for transcription, kept around so intonation can also be
+  // computed from the actual voice (pitch variation) instead of only from the transcript text.
+  const recordedAudioBlobRef = useRef<Blob | null>(null);
   const [isTranscribing, setIsTranscribing] = useState(false);
 
   // True whenever we WANT audio recording to be running but haven't managed to start it yet
@@ -364,6 +368,7 @@ export default function PresentationRoomPage() {
     // with question generation below — both are awaited together before entering Q&A, so the
     // final scoring step always has the accurate, filler-word-preserving transcript ready.
     const transcriptionPromise = audioRecorder.stopRecording().then(async (blob) => {
+      recordedAudioBlobRef.current = blob;
       if (!blob || blob.size === 0) {
         console.warn('[Room] No audio captured for this presentation — falling back to live-caption transcript. (Was the mic ready when "Mulai Presentasi" was clicked?)');
         return;
@@ -502,6 +507,18 @@ export default function PresentationRoomPage() {
       fillerCount = speechData.filler_words ?? 0;
     } catch (err) {
       console.warn('Fallback to local speech score', err);
+    }
+
+    // Prefer real prosody analysis (pitch variation from the actual recorded voice) over
+    // the API's text-based proxy above — falls back to that proxy if audio analysis fails
+    // (e.g. too little voiced speech, or the browser can't decode the recording).
+    try {
+      const intonationResult = await analyzeIntonation(recordedAudioBlobRef.current);
+      if (intonationResult) {
+        intonationScore = intonationResult.score;
+      }
+    } catch (err) {
+      console.warn('Intonation audio analysis failed, keeping text-based score', err);
     }
 
     // Run content analysis API to get accurate content & structure scores
