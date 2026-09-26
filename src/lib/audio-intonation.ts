@@ -16,6 +16,13 @@ const HOP_SIZE = 1024;
 const MIN_VOICE_HZ = 70;
 const MAX_VOICE_HZ = 400;
 const MIN_VOICED_FRAMES = 10;
+// Yield back to the browser every this many frames so a long recording's worth of pitch
+// detection never blocks the main thread long enough to trigger a "Page Unresponsive" warning.
+const FRAMES_PER_BATCH = 50;
+
+function yieldToBrowser(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0));
+}
 
 // Real prosody analysis from the raw recorded audio, replacing the old proxy (which just
 // scored "intonation" from how many words were spoken — it never looked at the voice itself).
@@ -38,11 +45,18 @@ export async function analyzeIntonation(blob: Blob | null | undefined): Promise<
     const detectPitch = Pitchfinder.YIN({ sampleRate: audioBuffer.sampleRate });
     const pitches: number[] = [];
 
+    let framesSinceYield = 0;
     for (let i = 0; i + FRAME_SIZE <= samples.length; i += HOP_SIZE) {
       const frame = samples.subarray(i, i + FRAME_SIZE);
       const freq = detectPitch(frame);
       if (freq && freq >= MIN_VOICE_HZ && freq <= MAX_VOICE_HZ) {
         pitches.push(freq);
+      }
+
+      framesSinceYield++;
+      if (framesSinceYield >= FRAMES_PER_BATCH) {
+        framesSinceYield = 0;
+        await yieldToBrowser();
       }
     }
 
